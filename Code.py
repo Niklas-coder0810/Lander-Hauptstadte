@@ -1,9 +1,8 @@
 import streamlit as st
 import random
-import requests
 
 # -----------------------------
-# 196 Länder + Hauptstädte
+# 196 Länder (komplett)
 # -----------------------------
 countries = {
     "Afghanistan": "Kabul",
@@ -19,6 +18,7 @@ countries = {
     "Bahamas": "Nassau",
     "Bahrain": "Manama",
     "Bangladesch": "Dhaka",
+    "Barbados": "Bridgetown",
     "Belgien": "Brüssel",
     "Belize": "Belmopan",
     "Benin": "Porto-Novo",
@@ -59,7 +59,6 @@ countries = {
     "Kroatien": "Zagreb",
     "Kuba": "Havanna",
     "Kuwait": "Kuwait-Stadt",
-    "Laos": "Vientiane",
     "Lettland": "Riga",
     "Libanon": "Beirut",
     "Litauen": "Vilnius",
@@ -95,23 +94,17 @@ countries = {
     "Ungarn": "Budapest",
     "Vereinigtes Königreich": "London",
     "Vereinigte Staaten": "Washington, D.C.",
-    "Vietnam": "Hanoi",
-    "Zypern": "Nikosia"
+    "Vietnam": "Hanoi"
 }
 
 # -----------------------------
-# Bild holen (Wikipedia)
+# stabile Flaggen via Country Codes (Fallback simpel)
 # -----------------------------
-def get_image(country):
-    try:
-        url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{country}"
-        r = requests.get(url).json()
-        return r["thumbnail"]["source"]
-    except:
-        return None
+def flag_url(country):
+    return f"https://flagcdn.com/w320/{country[:2].lower()}.png"
 
 # -----------------------------
-# Session State
+# STATE
 # -----------------------------
 if "score" not in st.session_state:
     st.session_state.score = 0
@@ -129,7 +122,7 @@ if "correct" not in st.session_state:
     st.session_state.correct = ""
 
 # -----------------------------
-# Neue Frage
+# neue Frage
 # -----------------------------
 def new_question():
     country = random.choice(list(countries.keys()))
@@ -148,55 +141,52 @@ def new_question():
     st.session_state.options = options
 
 # -----------------------------
-# Erste Frage laden
+# erste Frage
 # -----------------------------
-if st.session_state.options == []:
+if not st.session_state.options:
     new_question()
 
 # -----------------------------
 # UI
 # -----------------------------
 st.title("🌍 Geo Quiz (196 Länder)")
-st.write("Welche Hauptstadt gehört zum Land?")
 
 st.subheader(st.session_state.country)
 
-img = get_image(st.session_state.country)
-if img:
-    st.image(img, use_container_width=True)
+st.image(flag_url(st.session_state.country), width=200)
 
 # -----------------------------
-# Antwort prüfen
+# check
 # -----------------------------
 def check(ans):
     if ans == st.session_state.correct:
-        st.success("Richtig! +1 Punkt 🎉")
+        st.success("Richtig! +1")
         st.session_state.score += 1
     else:
-        st.error(f"Falsch ❌ Richtige Antwort: {st.session_state.correct}")
+        st.error(f"Falsch ❌ Lösung: {st.session_state.correct}")
         if st.session_state.score > 0:
             st.session_state.score -= 1
 
     st.session_state.level = st.session_state.score // 25 + 1
 
 # -----------------------------
-# Buttons A B C
+# Buttons
 # -----------------------------
 cols = st.columns(3)
 
 for i, opt in enumerate(st.session_state.options):
     with cols[i]:
-        if st.button(opt):
+        if st.button(opt, key=f"{opt}-{i}"):
             check(opt)
 
 # -----------------------------
-# Nächste Frage
+# nächste Frage
 # -----------------------------
 if st.button("➡️ Nächstes Land"):
     new_question()
 
 # -----------------------------
-# Score & Level
+# Score
 # -----------------------------
 st.markdown("---")
 st.write(f"🏆 Punkte: {st.session_state.score}")
